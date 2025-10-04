@@ -109,6 +109,7 @@ def create_api_interface():
             
             Generate videos using Alibaba Cloud DashScope WAN 2.5 API.
 
+            """
         )
         
         with gr.Row():
@@ -191,18 +192,6 @@ def create_api_interface():
                 output_video = gr.Video(label="Generated Video")
                 output_status = gr.Textbox(label="Status", lines=5)
                 
-                gr.Markdown(
-                    """
-                    ### 💡 Tips:
-                    - **text2video**: Generate video from text description only
-                    - **img2video**: Use an image as the first frame and animate it
-                    - Use detailed descriptions for best results
-                    - Higher resolutions require more time and resources
-                    - Seed allows reproducing identical results
-                    - DashScope API key starts with "sk-"
-                    - Local image upload has priority over URL
-                    """
-                )
         
         # Mode change handler - show/hide image inputs
         mode.change(
