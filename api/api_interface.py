@@ -74,14 +74,16 @@ def generate_video(api_key, mode, prompt, image_file, image_url, duration, resol
         if video_url:
             progress(1.0, desc="Done!")
             mode_desc = "img2video" if mode == "img2video" else "text2video"
-            return video_url, f"✅ Video generated successfully!\nMode: {mode_desc}\nTask ID: {task_id}\nVideo URL: {video_url}"
+            status_message = f"✅ Video generated successfully!\nMode: {mode_desc}\nTask ID: {task_id}\nVideo URL: {video_url}"
+            task_info = f"Task ID: {task_id}\nMode: {mode_desc}\nResolution: {resolution}\nDuration: {duration}s\nFPS: {fps}\nSeed: {seed if seed > 0 else 'random'}"
+            return video_url, status_message, task_info
         else:
-            return None, "❌ Error: Video generation failed"
+            return None, "❌ Error: Video generation failed", "Generation failed - please check your inputs and try again."
             
     except ValueError as e:
-        return None, f"❌ Error: {str(e)}"
+        return None, f"❌ Error: {str(e)}", f"Validation error: {str(e)}"
     except Exception as e:
-        return None, f"❌ Error: {str(e)}"
+        return None, f"❌ Error: {str(e)}", f"Unexpected error: {str(e)}"
 
 def update_image_inputs(mode):
     """
@@ -113,7 +115,7 @@ def create_api_interface():
         )
         
         with gr.Row():
-            with gr.Column(scale=1):
+            with gr.Column(scale=2, min_width=550):
                 gr.Markdown("### 🔐 Authentication")
                 
                 api_key = gr.Textbox(
@@ -186,11 +188,33 @@ def create_api_interface():
                 
                 generate_btn = gr.Button("🎬 Generate Video", variant="primary", size="lg")
             
-            with gr.Column(scale=1):
-                gr.Markdown("### 🎬 Result")
+            with gr.Column(scale=7):
+                gr.Markdown("### 🎬 WAN 2.5 Result")
                 
-                output_video = gr.Video(label="Generated Video")
-                output_status = gr.Textbox(label="Status", lines=5)
+                output_video = gr.Video(
+                    label="Generated Video",
+                    height=550,
+                    interactive=False
+                )
+                
+                with gr.Row():
+                    output_status = gr.Textbox(
+                        label="Generation Status",
+                        lines=2,
+                        max_lines=5,
+                        show_copy_button=True
+                    )
+                
+                gr.Markdown("### 📊 Generation Details")
+                
+                with gr.Row():
+                    task_info = gr.Textbox(
+                        label="Task Information",
+                        lines=9,
+                        interactive=False,
+                        value="Task details will appear here after generation..."
+                    )
+                
                 
         
         # Mode change handler - show/hide image inputs
@@ -204,7 +228,7 @@ def create_api_interface():
         generate_btn.click(
             fn=generate_video,
             inputs=[api_key, mode, prompt, image_file, image_url, duration, resolution, fps, seed],
-            outputs=[output_video, output_status]
+            outputs=[output_video, output_status, task_info]
         )
         
         gr.Markdown(
