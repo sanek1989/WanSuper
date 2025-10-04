@@ -3,7 +3,7 @@
 > **Создано [The Angel Studio](https://boosty.to/the_angel)**  
 > 🎨 Professional AI Video Generation Tools
 
-[![Boosty](https://img.shields.io/badge/Support-Boosty-orange)](https://boosty.to/the_angel)
+[![Boosty](https://img.shields.io/badge/Support-Boosty-orange)](https://boosty.to/the_angel/donate)
 
 ---
 
