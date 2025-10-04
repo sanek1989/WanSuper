@@ -48,6 +48,7 @@ class DashScopeClient:
             Task ID on success, None on failure
         """
         try:
+            # Build input dict with all input parameters
             input_params = {"prompt": prompt}
             
             # Handle image input (URL or local file path)
@@ -64,6 +65,7 @@ class DashScopeClient:
                     # Handle other types (if any)
                     input_params["image_url"] = str(image_url)
             
+            # Build parameters dict with generation settings
             parameters = {
                 "duration": duration,
                 "size": f"{width}x{height}",
@@ -73,6 +75,7 @@ class DashScopeClient:
             if seed is not None:
                 parameters["seed"] = seed
             
+            # Call DashScope SDK with single input dict
             response = dashscope.VideoSynthesis.async_call(
                 model="wan25-turbo",
                 input=input_params,
