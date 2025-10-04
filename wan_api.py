@@ -1,14 +1,13 @@
 """DashScope WAN 2.5 Video Generation API Client"""
 import time
 import os
-from typing import Optional, Dict, Any, Callable
+from typing import Optional, Dict, Any, Callable, Union
 from http import HTTPStatus
 import dashscope
 
-
 class DashScopeClient:
     """Client for Alibaba Cloud DashScope WAN 2.5 Video Generation API"""
-
+    
     def __init__(self, api_key: Optional[str] = None):
         """
         Initialize DashScope client
@@ -22,11 +21,11 @@ class DashScopeClient:
                 "API key required: pass api_key or set DASHSCOPE_API_KEY environment variable"
             )
         dashscope.api_key = self.api_key
-
+    
     def submit_generation(
         self,
         prompt: str,
-        image_url: Optional[str] = None,
+        image_url: Optional[Union[str, object]] = None,
         duration: int = 5,
         width: int = 1280,
         height: int = 720,
@@ -38,7 +37,7 @@ class DashScopeClient:
         
         Args:
             prompt: Text description for video generation
-            image_url: Optional first frame image URL (img2video mode)
+            image_url: Optional first frame image URL or local file path (img2video mode)
             duration: Video duration in seconds (default: 5)
             width: Video width in pixels (default: 1280)
             height: Video height in pixels (default: 720)
@@ -50,23 +49,36 @@ class DashScopeClient:
         """
         try:
             input_params = {"prompt": prompt}
+            
+            # Handle image input (URL or local file path)
             if image_url:
-                input_params["image_url"] = image_url
-
+                if isinstance(image_url, str):
+                    # Check if it's a local file path or URL
+                    if os.path.exists(image_url):
+                        # Local file path - use file:// protocol
+                        input_params["image_url"] = f"file://{os.path.abspath(image_url)}"
+                    else:
+                        # Assume it's a URL
+                        input_params["image_url"] = image_url
+                else:
+                    # Handle other types (if any)
+                    input_params["image_url"] = str(image_url)
+            
             parameters = {
                 "duration": duration,
                 "size": f"{width}x{height}",
                 "fps": fps,
             }
+            
             if seed is not None:
                 parameters["seed"] = seed
-
+            
             response = dashscope.VideoSynthesis.async_call(
                 model="wan25-turbo",
                 input=input_params,
                 parameters=parameters,
             )
-
+            
             if response.status_code == HTTPStatus.OK:
                 task_id = response.output.get("task_id")
                 if task_id:
@@ -82,7 +94,7 @@ class DashScopeClient:
         except Exception as e:
             print(f"Exception during generation submission: {e}")
             return None
-
+    
     def check_status(self, task_id: str) -> Optional[Dict[str, Any]]:
         """
         Check task status (fetch pattern)
@@ -96,7 +108,7 @@ class DashScopeClient:
         """
         try:
             response = dashscope.VideoSynthesis.fetch(task_id=task_id)
-
+            
             if response.status_code == HTTPStatus.OK:
                 output = response.output
                 status = output.get("task_status", "UNKNOWN")
@@ -121,7 +133,7 @@ class DashScopeClient:
         except Exception as e:
             print(f"Exception checking status: {e}")
             return None
-
+    
     def _normalize_status(self, dashscope_status: str) -> str:
         """
         Normalize DashScope status to standard format
@@ -135,7 +147,7 @@ class DashScopeClient:
             "FAILED": "failed",
         }
         return status_map.get(dashscope_status, "unknown")
-
+    
     def _calculate_progress(self, status: str) -> int:
         """
         Estimate progress percentage based on status
@@ -147,7 +159,7 @@ class DashScopeClient:
             "FAILED": 0,
         }
         return progress_map.get(status, 0)
-
+    
     def wait_for_completion(
         self,
         task_id: str,
@@ -206,7 +218,6 @@ class DashScopeClient:
         
         print(f"Timeout: exceeded {max_wait_time} seconds")
         return None
-
 
 if __name__ == "__main__":
     # Example usage
