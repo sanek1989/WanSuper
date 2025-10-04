@@ -1,9 +1,7 @@
 # WAN 2.5 Video Generator (DashScope SDK)
-
 🎬 Video generation project using Alibaba Cloud DashScope official SDK for WAN 2.5 with Gradio UI.
 
 ## Update: DashScope Official SDK Integration
-
 - Integrated official DashScope Python SDK
 - API pattern: `async_call` → `fetch` → `wait`
 - Support for both text2video and img2video modes
@@ -13,11 +11,9 @@
 - Updated all documentation to reflect DashScope SDK usage
 
 ## 📋 Description
-
 This application provides a simple web interface for working with WAN 2.5 video generation model using the official Alibaba Cloud DashScope SDK.
 
 ## ✨ Features
-
 - 🔐 Authentication with DashScope API key (sk-...)
 - 🎥 **Mode Selection**: Choose between text2video or img2video generation
 - 📝 Text-to-video generation with prompts
@@ -36,12 +32,10 @@ This application provides a simple web interface for working with WAN 2.5 video 
 ## 🚀 Quick Start
 
 ### Requirements
-
 - Python 3.8+
 - Active DashScope API key with WAN 2.5 access
 
 ### Installation
-
 ```bash
 git clone https://github.com/sanek1989/WanSuper.git
 cd WanSuper
@@ -55,19 +49,22 @@ This will install:
 - Other dependencies
 
 ### Getting DashScope API Key
-
 1. Visit [Alibaba Cloud DashScope Console](https://dashscope.console.aliyun.com/)
 2. Create or obtain your API key (format: `sk-...`)
 3. Save the key securely
 
 Alternatively, set the key as an environment variable:
-
 ```bash
 export DASHSCOPE_API_KEY="sk-xxxxxxxxxxxxxxxxxxxxxxxx"
 ```
 
-## ▶️ Running
+### ⚠️ ВАЖНО: Требование способа оплаты / IMPORTANT: Payment Method Requirement
 
+**Для работы с DashScope ключом (sk-...) и любыми моделями WAN 2.5 необходимо добавить способ оплаты (банковская карта, AliPay и др.) в панели Alibaba Cloud. Без этого API-ключ не работает, и все обращения заблокированы: будет ошибка `NO_AVAILABLE_PAYMENT_METHOD`. Даже бесплатные квоты требуют актуальной оплаты! Проверьте ваш аккаунт перед запуском.**
+
+**To use DashScope API keys (sk-...) with any WAN 2.5 models, you MUST add a payment method (bank card, AliPay, etc.) to your Alibaba Cloud account. Without this, the API key will not work and all requests will be blocked with error `NO_AVAILABLE_PAYMENT_METHOD`. Even free quotas require an active payment method! Please verify your account before running.**
+
+## ▶️ Running
 ```bash
 python main.py
 ```
@@ -79,19 +76,17 @@ After starting, open your browser at:
 ## 📖 Usage
 
 ### Text2Video Mode
-
 1. Enter your DashScope API key in the "DashScope API Key" field
-2. **Select "text2video" mode**
+2. Select "text2video" mode
 3. Enter a text description (prompt)
 4. Configure generation parameters (duration, resolution, FPS, seed)
 5. Click "Generate Video" and wait for completion
 6. The video URL will be provided upon completion
 
 ### Img2Video Mode
-
 1. Enter your DashScope API key in the "DashScope API Key" field
-2. **Select "img2video" mode**
-3. **Upload an image** from your PC (preferred) OR provide an image URL
+2. Select "img2video" mode
+3. Upload an image from your PC (preferred) OR provide an image URL
    - Image upload field will appear when img2video is selected
    - Local file upload has priority over URL if both are provided
 4. Enter a text description (prompt) describing what should happen in the video
@@ -99,10 +94,9 @@ After starting, open your browser at:
 6. Click "Generate Video" and wait for completion
 7. The video URL will be provided upon completion
 
-**Note:** In img2video mode, the uploaded/provided image will be used as the first frame of the generated video.
+Note: In img2video mode, the uploaded/provided image will be used as the first frame of the generated video.
 
 ## 🗂️ Project Structure
-
 ```
 WanSuper/
 ├── main.py              # Gradio UI with mode selection and image upload
@@ -114,16 +108,14 @@ WanSuper/
 ## 🔧 Components
 
 ### main.py
-
 Gradio application with:
 - DashScope API key input
-- **Mode selection** (text2video / img2video)
-- **Local image upload** support
+- Mode selection (text2video / img2video)
+- Local image upload support
 - Generation parameters
 - Integrates DashScopeClient for video generation
 
 ### wan_api.py
-
 DashScope WAN 2.5 API client using official SDK:
 
 ```python
@@ -155,17 +147,17 @@ video_url = client.wait_for_completion(
 print(f"Video URL: {video_url}")
 ```
 
-**Key methods:**
-- `submit_generation()` - Submit task using `dashscope.VideoSynthesis.async_call()`
+Key methods:
+- **submit_generation()** - Submit task using dashscope.VideoSynthesis.async_call()
   - Handles both URL and local file paths for images
-- `check_status()` - Check task status using `dashscope.VideoSynthesis.fetch()`
-- `wait_for_completion()` - Wait for task and return video URL
+- **check_status()** - Check task status using dashscope.VideoSynthesis.fetch()
+- **wait_for_completion()** - Wait for task and return video URL
 
-**Status mapping:**
-- DashScope `PENDING` → `pending`
-- DashScope `RUNNING` → `processing`
-- DashScope `SUCCEEDED` → `completed`
-- DashScope `FAILED` → `failed`
+Status mapping:
+- DashScope PENDING → pending
+- DashScope RUNNING → processing
+- DashScope SUCCEEDED → completed
+- DashScope FAILED → failed
 
 ## 🌐 DashScope API Pattern
 
@@ -197,7 +189,6 @@ The official DashScope SDK follows this pattern:
    ```
 
 ## 💡 Tips
-
 - Store API key in environment variables (`DASHSCOPE_API_KEY`), don't commit it
 - **Mode Selection**: Choose the appropriate mode for your use case
   - `text2video`: Generate video purely from text description
@@ -211,7 +202,6 @@ The official DashScope SDK follows this pattern:
 - API key format: `sk-` followed by alphanumeric characters
 
 ## 🐛 Troubleshooting
-
 - **"API key required"** - Provide valid DashScope API key
 - **"Failed to submit"** - Check API key validity and WAN 2.5 access
 - **"Generation failed"** - Check API quota/limits and parameter formats
@@ -221,15 +211,12 @@ The official DashScope SDK follows this pattern:
 - **Image not uploading** - Check file format and size, try using a URL instead
 
 ## 📚 Documentation
-
 - [DashScope Official Documentation](https://help.aliyun.com/zh/dashscope/)
 - [WAN 2.5 Video Synthesis API](https://help.aliyun.com/zh/dashscope/developer-reference/api-details-9)
 - [Gradio Documentation](https://gradio.app/docs/)
 
 ## 📝 License
-
 Open source project for use and modification.
 
 ## 📧 Contact
-
 For issues or questions, create an Issue in the repository.
