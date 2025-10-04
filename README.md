@@ -1,106 +1,201 @@
-# WAN 2.5 Video Generator (Cloud)
+# WAN 2.5 Video Generator (DashScope SDK)
 
-🎬 Проект для генерации видео с использованием облачного Alibaba WAN 2.5 через удобный Gradio-интерфейс.
+🎬 Video generation project using Alibaba Cloud DashScope official SDK for WAN 2.5 with Gradio UI.
 
-## Обновление: поддержка Cloud API Key
-- Убрано поле ввода URL сервера
-- Добавлено поле API-ключа Alibaba WAN 2.5 (Bearer Authorization)
-- Клиент использует облачный endpoint по умолчанию
-- Обновлена документация и UI
+## Update: DashScope Official SDK Integration
 
-## 📋 Описание
-Приложение предоставляет простой веб‑интерфейс для работы с WAN 2.5 — моделью генерации видео. Теперь используется облачный API Alibaba WAN 2.5 без необходимости поднимать локальный сервер.
+- Integrated official DashScope Python SDK
+- API pattern: `async_call` → `fetch` → `wait`
+- Support for both text2video and img2video modes
+- Direct video URL from DashScope API
+- Updated all documentation to reflect DashScope SDK usage
 
-## ✨ Возможности
-- 🔐 Аутентификация по API‑ключу (Bearer)
-- 📝 Генерация видео по текстовым описаниям (prompts)
-- ⚙️ Настройка параметров генерации:
-  - Длительность видео (1–30 секунд)
-  - Разрешение (512x512 до 1920x1080)
-  - Количество кадров в секунду (8–60 FPS)
-  - Seed для воспроизводимости результатов
-- 📊 Отслеживание прогресса
-- 💾 Автоматическая загрузка готового видео
-- 🎨 Удобный Gradio‑интерфейс
+## 📋 Description
 
-## 🚀 Быстрый старт
-### Требования
+This application provides a simple web interface for working with WAN 2.5 video generation model using the official Alibaba Cloud DashScope SDK.
+
+## ✨ Features
+
+- 🔐 Authentication with DashScope API key (sk-...)
+- 📝 Text-to-video generation with prompts
+- 🖼️ Image-to-video generation (first frame)
+- ⚙️ Customizable generation parameters:
+  - Video duration (1-30 seconds)
+  - Resolution (512x512 to 1920x1080)
+  - Frames per second (8-60 FPS)
+  - Seed for reproducible results
+- 📊 Progress tracking
+- 🎬 Direct video URL output
+- 🎨 User-friendly Gradio interface
+
+## 🚀 Quick Start
+
+### Requirements
+
 - Python 3.8+
-- Действующий API‑ключ Alibaba WAN 2.5
+- Active DashScope API key with WAN 2.5 access
 
-### Установка
+### Installation
+
 ```bash
 git clone https://github.com/sanek1989/WanSuper.git
 cd WanSuper
 pip install -r requirements.txt
 ```
 
-### Получение API‑ключа Alibaba WAN 2.5
-1. Зайдите в консоль Alibaba Cloud и откройте раздел WAN 2.5 (AliWAN)
-2. Создайте или получите API‑ключ для доступа к сервису
-3. Сохраните ключ в безопасном месте
+This will install:
+- `dashscope>=1.14.0` - Official DashScope SDK
+- `gradio>=4.0.0` - Web UI framework
+- `requests>=2.31.0` - HTTP library
+- Other dependencies
 
-Альтернативно, вы можете установить ключ в переменную окружения:
+### Getting DashScope API Key
+
+1. Visit [Alibaba Cloud DashScope Console](https://dashscope.console.aliyun.com/)
+2. Create or obtain your API key (format: `sk-...`)
+3. Save the key securely
+
+Alternatively, set the key as an environment variable:
+
 ```bash
-export ALIWAN_API_KEY="ALI-XXXXXXXXXXXXXXXXXXXXXXXX"
+export DASHSCOPE_API_KEY="sk-xxxxxxxxxxxxxxxxxxxxxxxx"
 ```
 
-## ▶️ Запуск
+## ▶️ Running
+
 ```bash
 python main.py
 ```
-После запуска откройте браузер и перейдите по адресу:
-- Локально: http://localhost:7860
-- Из сети: http://YOUR_IP:7860
 
-## 📖 Использование
-1. Вставьте ваш API‑ключ Alibaba WAN 2.5 в поле «API‑ключ»
-2. Введите текстовое описание (prompt)
-3. Настройте параметры генерации (длительность, разрешение, FPS, seed)
-4. Нажмите «Сгенерировать видео» и дождитесь окончания
+After starting, open your browser at:
+- Locally: http://localhost:7860
+- From network: http://YOUR_IP:7860
 
-## 🗂️ Структура проекта
+## 📖 Usage
+
+1. Enter your DashScope API key in the "DashScope API Key" field
+2. Enter a text description (prompt)
+3. (Optional) Provide an image URL for img2video mode
+4. Configure generation parameters (duration, resolution, FPS, seed)
+5. Click "Generate Video" and wait for completion
+6. The video URL will be provided upon completion
+
+## 🗂️ Project Structure
+
 ```
 WanSuper/
-├── main.py              # Gradio‑интерфейс (Cloud UI с API‑ключом)
-├── wan_api.py           # Клиент облачного WAN 2.5 (Bearer + cloud endpoint)
-├── requirements.txt     # Зависимости проекта
-└── README.md            # Документация
+├── main.py              # Gradio UI with DashScopeClient integration
+├── wan_api.py           # DashScopeClient class (async_call/fetch/wait)
+├── requirements.txt     # Project dependencies (includes dashscope)
+└── README.md            # Documentation
 ```
 
-## 🔧 Компоненты
+## 🔧 Components
+
 ### main.py
-Gradio‑приложение с полем API‑ключа и параметрами генерации. Передает ключ в WANClient.
+
+Gradio application with DashScope API key input and generation parameters. Integrates DashScopeClient for video generation.
 
 ### wan_api.py
-HTTP‑клиент для AliWAN 2.5 Cloud API:
-- Заголовки: Content-Type, Accept, Authorization: Bearer <API_KEY>
-- Эндпоинты: /health, /api/generate, /api/status/{task_id}, /api/download/{task_id}
-- Ожидание завершения задачи и загрузка видео
 
-## 🌐 Cloud API Endpoints
-По умолчанию используется облачный endpoint:
+DashScope WAN 2.5 API client using official SDK:
+
+```python
+from wan_api import DashScopeClient
+
+# Initialize client
+client = DashScopeClient(api_key="sk-...")
+
+# Submit generation task (async_call)
+task_id = client.submit_generation(
+    prompt="A beautiful sunset over the ocean",
+    image_url="https://example.com/image.jpg",  # Optional
+    duration=5,
+    width=1280,
+    height=720,
+    fps=24,
+    seed=42  # Optional
+)
+
+# Check status (fetch)
+status_info = client.check_status(task_id)
+
+# Wait for completion (wait)
+video_url = client.wait_for_completion(
+    task_id,
+    progress_callback=lambda p: print(f"Progress: {p*100}%")
+)
+
+print(f"Video URL: {video_url}")
 ```
-https://api.aliyun.com/wan/v2.5
-```
-Основные пути:
-- GET /health — проверка доступности
-- POST /api/generate — создать задачу генерации
-- GET /api/status/{task_id} — статус
-- GET /api/download/{task_id} — загрузка видео
 
-## 💡 Советы
-- Храните API‑ключ в переменных окружения и не коммитьте его в репозиторий
-- Детальный prompt улучшает качество результата
-- Большие разрешения требуют больше времени и квоты API
+**Key methods:**
+- `submit_generation()` - Submit task using `dashscope.VideoSynthesis.async_call()`
+- `check_status()` - Check task status using `dashscope.VideoSynthesis.fetch()`
+- `wait_for_completion()` - Wait for task and return video URL
 
-## 🐛 Устранение неполадок
-- «Облачный сервис недоступен» — проверьте подключение и валидность API‑ключа
-- «Не удалось отправить запрос» — проверьте лимиты/квоты и формат параметров
-- Медленная генерация — уменьшите длительность/разрешение/FPS
+**Status mapping:**
+- DashScope `PENDING` → `pending`
+- DashScope `RUNNING` → `processing`
+- DashScope `SUCCEEDED` → `completed`
+- DashScope `FAILED` → `failed`
 
-## 📝 Лицензия
-Открытый проект для использования и модификации.
+## 🌐 DashScope API Pattern
 
-## 📧 Контакты
-По вопросам создайте Issue в репозитории.
+The official DashScope SDK follows this pattern:
+
+1. **async_call** - Submit generation task
+   ```python
+   response = dashscope.VideoSynthesis.async_call(
+       model="wan25-turbo",
+       input={"prompt": "..."},
+       parameters={"duration": 5, "size": "1280x720"}
+   )
+   task_id = response.output.get("task_id")
+   ```
+
+2. **fetch** - Check task status
+   ```python
+   response = dashscope.VideoSynthesis.fetch(task_id=task_id)
+   status = response.output.get("task_status")  # PENDING, RUNNING, SUCCEEDED, FAILED
+   ```
+
+3. **wait** - Poll until completion
+   ```python
+   while status != "SUCCEEDED":
+       response = dashscope.VideoSynthesis.fetch(task_id=task_id)
+       status = response.output.get("task_status")
+       time.sleep(5)
+   video_url = response.output.get("video_url")
+   ```
+
+## 💡 Tips
+
+- Store API key in environment variables (`DASHSCOPE_API_KEY`), don't commit it
+- Detailed prompts improve generation quality
+- Higher resolutions require more time and API quota
+- Use seed for reproducible results
+- Image URL enables img2video mode (first frame)
+- API key format: `sk-` followed by alphanumeric characters
+
+## 🐛 Troubleshooting
+
+- **"API key required"** - Provide valid DashScope API key
+- **"Failed to submit"** - Check API key validity and WAN 2.5 access
+- **"Generation failed"** - Check API quota/limits and parameter formats
+- **Slow generation** - Reduce duration/resolution/FPS
+- **Import errors** - Run `pip install dashscope>=1.14.0`
+
+## 📚 Documentation
+
+- [DashScope Official Documentation](https://help.aliyun.com/zh/dashscope/)
+- [WAN 2.5 Video Synthesis API](https://help.aliyun.com/zh/dashscope/developer-reference/api-details-9)
+- [Gradio Documentation](https://gradio.app/docs/)
+
+## 📝 License
+
+Open source project for use and modification.
+
+## 📧 Contact
+
+For issues or questions, create an Issue in the repository.
