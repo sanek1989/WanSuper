@@ -1,4 +1,4 @@
-# 🎬 WAN 2.5 Video Generator
+# 🎬 WAN Super Video/image Generator
 
 > **Создано [The Angel Studio](https://boosty.to/the_angel)**  
 > 🎨 Professional AI Video Generation Tools
