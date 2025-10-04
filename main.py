@@ -143,9 +143,6 @@ def create_main_interface():
         theme=gr.themes.Soft()
     ) as demo:
         
-        # State to track current section
-        current_section = gr.State("home")
-        
         with gr.Row():
             # Left sidebar with navigation
             with gr.Column(scale=1, min_width=250):
@@ -163,7 +160,7 @@ def create_main_interface():
                 for label, key in nav_items:
                     nav_buttons[key] = gr.Button(
                         label,
-                        variant="secondary" if key != "home" else "primary",
+                        variant="primary" if key == "home" else "secondary",
                         size="lg",
                         elem_classes=["nav-button"]
                     )
@@ -197,34 +194,38 @@ def create_main_interface():
                     "support": support_content
                 }
         
-        def switch_section(section_key, current):
+        def switch_section(section_key):
             """Switch to the selected section"""
-            updates = {}
+            updates = []
             
-            # Hide all content containers
-            for key, container in content_containers.items():
-                updates[container] = gr.update(visible=(key == section_key))
+            # Hide all content containers and show only the selected one
+            for key in ["home", "api", "local", "about", "support"]:
+                updates.append(gr.update(visible=(key == section_key)))
             
             # Update button variants
-            for key, button in nav_buttons.items():
-                updates[button] = gr.update(
+            for key in ["home", "api", "local", "about", "support"]:
+                updates.append(gr.update(
                     variant="primary" if key == section_key else "secondary"
-                )
+                ))
             
-            # Update current section state
-            updates[current_section] = section_key
-            
-            return list(updates.values())
+            return updates
         
         # Set up navigation click handlers
         for key, button in nav_buttons.items():
             button.click(
-                fn=lambda section=key, current=current_section: switch_section(section, current),
-                inputs=[current_section],
+                fn=lambda k=key: switch_section(k),
+                inputs=[],
                 outputs=[
-                    *content_containers.values(),
-                    *nav_buttons.values(),
-                    current_section
+                    home_content,
+                    api_content,
+                    local_content,
+                    about_content,
+                    support_content,
+                    nav_buttons["home"],
+                    nav_buttons["api"],
+                    nav_buttons["local"],
+                    nav_buttons["about"],
+                    nav_buttons["support"]
                 ]
             )
     
