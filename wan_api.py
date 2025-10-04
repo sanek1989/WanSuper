@@ -1,47 +1,32 @@
-import requests
+"""DashScope WAN 2.5 Video Generation API Client"""
 import time
 import os
 from typing import Optional, Dict, Any, Callable
+from http import HTTPStatus
+import dashscope
 
 
-class WANClient:
-    """
-    Клиент для взаимодействия с Alibaba WAN 2.5 Cloud API
-    """
+class DashScopeClient:
+    """Client for Alibaba Cloud DashScope WAN 2.5 Video Generation API"""
 
-    def __init__(self, api_key: str, api_url: str = "https://api.aliyun.com/wan/v2.5"):
+    def __init__(self, api_key: Optional[str] = None):
         """
-        Инициализация клиента
-
+        Initialize DashScope client
+        
         Args:
-            api_key: API-ключ Alibaba WAN 2.5
-            api_url: URL облачного сервера WAN 2.5
+            api_key: DashScope API key (if not provided, uses DASHSCOPE_API_KEY env var)
         """
-        self.api_url = api_url.rstrip('/')
-        self.session = requests.Session()
-        self.session.headers.update({
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': f'Bearer {api_key}'
-        })
-
-    def check_health(self) -> bool:
-        """
-        Проверка доступности сервера
-
-        Returns:
-            True если сервер доступен, False в противном случае
-        """
-        try:
-            response = self.session.get(f"{self.api_url}/health", timeout=5)
-            return response.status_code == 200
-        except Exception as e:
-            print(f"Ошибка проверки доступности: {e}")
-            return False
+        self.api_key = api_key or os.environ.get("DASHSCOPE_API_KEY")
+        if not self.api_key:
+            raise ValueError(
+                "API key required: pass api_key or set DASHSCOPE_API_KEY environment variable"
+            )
+        dashscope.api_key = self.api_key
 
     def submit_generation(
         self,
         prompt: str,
+        image_url: Optional[str] = None,
         duration: int = 5,
         width: int = 1280,
         height: int = 720,
@@ -49,203 +34,194 @@ class WANClient:
         seed: Optional[int] = None,
     ) -> Optional[str]:
         """
-        Отправка запроса на генерацию видео
-
+        Submit video generation task (async_call pattern)
+        
         Args:
-            prompt: Текстовое описание для генерации видео
-            duration: Продолжительность видео в секундах
-            width: Ширина видео в пикселях
-            height: Высота видео в пикселях
-            fps: Количество кадров в секунду
-            seed: Seed для воспроизводимости результатов
-
+            prompt: Text description for video generation
+            image_url: Optional first frame image URL (img2video mode)
+            duration: Video duration in seconds (default: 5)
+            width: Video width in pixels (default: 1280)
+            height: Video height in pixels (default: 720)
+            fps: Frames per second (default: 24)
+            seed: Random seed for reproducibility
+        
         Returns:
-            ID задачи или None в случае ошибки
+            Task ID on success, None on failure
         """
         try:
-            payload = {
-                "prompt": prompt,
+            input_params = {"prompt": prompt}
+            if image_url:
+                input_params["image_url"] = image_url
+
+            parameters = {
                 "duration": duration,
-                "width": width,
-                "height": height,
+                "size": f"{width}x{height}",
                 "fps": fps,
             }
+            if seed is not None:
+                parameters["seed"] = seed
 
-            if seed is not None and seed >= 0:
-                payload["seed"] = seed
-
-            response = self.session.post(
-                f"{self.api_url}/api/generate",
-                json=payload,
-                timeout=30,
+            response = dashscope.VideoSynthesis.async_call(
+                model="wan25-turbo",
+                input=input_params,
+                parameters=parameters,
             )
 
-            if response.status_code == 200:
-                result = response.json()
-                return result.get("task_id")
+            if response.status_code == HTTPStatus.OK:
+                task_id = response.output.get("task_id")
+                if task_id:
+                    return task_id
+                else:
+                    print(f"No task_id in response: {response}")
+                    return None
             else:
                 print(
-                    f"Ошибка при отправке запроса: {response.status_code} - {response.text}"
+                    f"Error submitting generation: {response.status_code} - {response.message}"
                 )
                 return None
-
         except Exception as e:
-            print(f"Ошибка при отправке запроса на генерацию: {e}")
+            print(f"Exception during generation submission: {e}")
             return None
 
     def check_status(self, task_id: str) -> Optional[Dict[str, Any]]:
         """
-        Проверка статуса задачи генерации
-
+        Check task status (fetch pattern)
+        
         Args:
-            task_id: ID задачи
-
+            task_id: Task ID
+        
         Returns:
-            Информация о статусе задачи или None в случае ошибки
+            Status info dict with keys: status, progress, video_url (if completed)
+            None on error
         """
         try:
-            response = self.session.get(
-                f"{self.api_url}/api/status/{task_id}",
-                timeout=10,
-            )
+            response = dashscope.VideoSynthesis.fetch(task_id=task_id)
 
-            if response.status_code == 200:
-                return response.json()
+            if response.status_code == HTTPStatus.OK:
+                output = response.output
+                status = output.get("task_status", "UNKNOWN")
+                
+                result = {
+                    "status": self._normalize_status(status),
+                    "progress": self._calculate_progress(status),
+                    "task_id": task_id,
+                }
+                
+                if status == "SUCCEEDED":
+                    video_url = output.get("video_url")
+                    if video_url:
+                        result["video_url"] = video_url
+                elif status == "FAILED":
+                    result["error"] = output.get("message", "Unknown error")
+                
+                return result
             else:
-                print(f"Ошибка проверки статуса: {response.status_code}")
+                print(f"Error checking status: {response.status_code} - {response.message}")
                 return None
-
         except Exception as e:
-            print(f"Ошибка при проверке статуса: {e}")
+            print(f"Exception checking status: {e}")
             return None
 
-    def download_video(self, task_id: str, output_path: Optional[str] = None) -> Optional[str]:
+    def _normalize_status(self, dashscope_status: str) -> str:
         """
-        Загрузка сгенерированного видео
-
-        Args:
-            task_id: ID задачи
-            output_path: Путь для сохранения видео (опционально)
-
-        Returns:
-            Путь к загруженному файлу или None в случае ошибки
+        Normalize DashScope status to standard format
+        
+        DashScope statuses: PENDING, RUNNING, SUCCEEDED, FAILED
         """
-        try:
-            response = self.session.get(
-                f"{self.api_url}/api/download/{task_id}",
-                timeout=120,
-                stream=True,
-            )
+        status_map = {
+            "PENDING": "pending",
+            "RUNNING": "processing",
+            "SUCCEEDED": "completed",
+            "FAILED": "failed",
+        }
+        return status_map.get(dashscope_status, "unknown")
 
-            if response.status_code == 200:
-                # Определение пути для сохранения
-                if output_path is None:
-                    os.makedirs("output", exist_ok=True)
-                    output_path = f"output/video_{task_id}.mp4"
-
-                # Сохранение файла
-                with open(output_path, 'wb') as f:
-                    for chunk in response.iter_content(chunk_size=8192):
-                        if chunk:
-                            f.write(chunk)
-
-                return output_path
-            else:
-                print(f"Ошибка загрузки видео: {response.status_code}")
-                return None
-
-        except Exception as e:
-            print(f"Ошибка при загрузке видео: {e}")
-            return None
+    def _calculate_progress(self, status: str) -> int:
+        """
+        Estimate progress percentage based on status
+        """
+        progress_map = {
+            "PENDING": 10,
+            "RUNNING": 50,
+            "SUCCEEDED": 100,
+            "FAILED": 0,
+        }
+        return progress_map.get(status, 0)
 
     def wait_for_completion(
         self,
         task_id: str,
         max_wait_time: int = 1200,
-        poll_interval: int = 3,
+        poll_interval: int = 5,
         progress_callback: Optional[Callable[[float], None]] = None,
     ) -> Optional[str]:
         """
-        Ожидание завершения генерации и загрузка видео
-
+        Wait for task completion and return video URL (wait pattern)
+        
         Args:
-            task_id: ID задачи
-            max_wait_time: Максимальное время ожидания в секундах
-            poll_interval: Интервал проверки статуса в секундах
-            progress_callback: Функция обратного вызова для отчета о прогрессе
-
+            task_id: Task ID
+            max_wait_time: Maximum wait time in seconds (default: 1200)
+            poll_interval: Status check interval in seconds (default: 5)
+            progress_callback: Optional callback function for progress updates
+        
         Returns:
-            Путь к загруженному видео или None в случае ошибки
+            Video URL on success, None on failure/timeout
         """
         start_time = time.time()
-
+        
         while time.time() - start_time < max_wait_time:
             status_info = self.check_status(task_id)
-
+            
             if status_info is None:
                 time.sleep(poll_interval)
                 continue
-
+            
             status = status_info.get("status")
             progress = status_info.get("progress", 0)
-
-            # Обновление прогресса
+            
+            # Update progress callback
             if progress_callback:
                 try:
                     progress_callback(float(progress) / 100.0)
                 except Exception:
                     pass
-
+            
             if status == "completed":
-                # Загрузка готового видео
-                return self.download_video(task_id)
+                video_url = status_info.get("video_url")
+                if video_url:
+                    return video_url
+                else:
+                    print("Task completed but no video_url found")
+                    return None
             elif status == "failed":
-                error = status_info.get("error", "Неизвестная ошибка")
-                print(f"Генерация не удалась: {error}")
+                error = status_info.get("error", "Unknown error")
+                print(f"Generation failed: {error}")
                 return None
             elif status in ["pending", "processing"]:
-                # Продолжаем ждать
+                # Continue waiting
                 time.sleep(poll_interval)
             else:
-                print(f"Неизвестный статус: {status}")
+                print(f"Unknown status: {status}")
                 time.sleep(poll_interval)
-
-        print(f"Превышено время ожидания ({max_wait_time} сек)")
+        
+        print(f"Timeout: exceeded {max_wait_time} seconds")
         return None
 
 
-def test_connection(api_key: str, api_url: str = "https://api.aliyun.com/wan/v2.5") -> bool:
-    """
-    Тестовая функция для проверки подключения к серверу
-
-    Args:
-        api_key: API-ключ Alibaba WAN 2.5
-        api_url: URL сервера WAN 2.5
-
-    Returns:
-        True если подключение успешно, False в противном случае
-    """
-    client = WANClient(api_key=api_key, api_url=api_url)
-    return client.check_health()
-
-
 if __name__ == "__main__":
-    # Пример использования
-    API_KEY = os.environ.get("ALIWAN_API_KEY", "")
-    API_URL = "https://api.aliyun.com/wan/v2.5"
-
+    # Example usage
+    API_KEY = os.environ.get("DASHSCOPE_API_KEY", "")
+    
     if not API_KEY:
-        print("❌ Установите переменную окружения ALIWAN_API_KEY с вашим API-ключом")
+        print("❌ Set DASHSCOPE_API_KEY environment variable")
         raise SystemExit(1)
-
-    print("Тестирование подключения к WAN 2.5 (Cloud)...")
-    if test_connection(API_KEY, API_URL):
-        print("✅ Подключение успешно!")
-
-        # Пример генерации видео
-        client = WANClient(API_KEY, API_URL)
-        print("\nЗапуск генерации тестового видео...")
-
+    
+    print("Testing DashScope WAN 2.5 video generation...")
+    
+    try:
+        client = DashScopeClient(API_KEY)
+        
+        print("\nSubmitting test video generation task...")
         task_id = client.submit_generation(
             prompt="A beautiful sunset over the ocean with birds flying in the sky",
             duration=5,
@@ -253,19 +229,18 @@ if __name__ == "__main__":
             height=720,
             fps=24,
         )
-
+        
         if task_id:
-            print(f"Задача создана: {task_id}")
-            print("Ожидание завершения генерации...")
-
-            video_path = client.wait_for_completion(task_id)
-
-            if video_path:
-                print(f"✅ Видео успешно сгенерировано: {video_path}")
+            print(f"Task created: {task_id}")
+            print("Waiting for generation to complete...")
+            
+            video_url = client.wait_for_completion(task_id)
+            
+            if video_url:
+                print(f"✅ Video generated successfully: {video_url}")
             else:
-                print("❌ Не удалось сгенерировать видео")
+                print("❌ Video generation failed")
         else:
-            print("❌ Не удалось создать задачу")
-    else:
-        print(f"❌ Не удалось подключиться к серверу: {API_URL}")
-        print("Убедитесь, что облачный WAN 2.5 доступен и API-ключ корректен.")
+            print("❌ Failed to create task")
+    except Exception as e:
+        print(f"❌ Error: {e}")
