@@ -1,222 +1,205 @@
-# WAN 2.5 Video Generator (DashScope SDK)
-🎬 Video generation project using Alibaba Cloud DashScope official SDK for WAN 2.5 with Gradio UI.
+# 🎬 WAN 2.5 Video Generator
 
-## Update: DashScope Official SDK Integration
-- Integrated official DashScope Python SDK
-- API pattern: `async_call` → `fetch` → `wait`
-- Support for both text2video and img2video modes
-- **NEW**: Mode selection UI (text2video / img2video)
-- **NEW**: Local image file upload for img2video
-- Direct video URL from DashScope API
-- Updated all documentation to reflect DashScope SDK usage
+> **Создано [The Angel Studio](https://boosty.to/the_angel)**  
+> 🎨 Professional AI Video Generation Tools
 
-## 📋 Description
-This application provides a simple web interface for working with WAN 2.5 video generation model using the official Alibaba Cloud DashScope SDK.
+[![Boosty](https://img.shields.io/badge/Support-Boosty-orange)](https://boosty.to/the_angel)
 
-## ✨ Features
-- 🔐 Authentication with DashScope API key (sk-...)
-- 🎥 **Mode Selection**: Choose between text2video or img2video generation
-- 📝 Text-to-video generation with prompts
-- 🖼️ Image-to-video generation (first frame)
-  - **Upload local image files** from your PC
-  - Or provide an image URL
-- ⚙️ Customizable generation parameters:
-  - Video duration (1-30 seconds)
-  - Resolution (512x512 to 1920x1080)
-  - Frames per second (8-60 FPS)
-  - Seed for reproducible results
-- 📊 Progress tracking
-- 🎬 Direct video URL output
-- 🎨 User-friendly Gradio interface
+---
 
-## 🚀 Quick Start
+## 📢 About The Angel Studio
 
-### Requirements
-- Python 3.8+
-- Active DashScope API key with WAN 2.5 access
+**The Angel Studio** — студия разработки AI-инструментов для креативных профессионалов.
 
-### Installation
+- 🌟 **Поддержать проект**: [https://boosty.to/the_angel](https://boosty.to/the_angel)
+- 💬 **Обратная связь**: Создавайте Issues в этом репозитории
+- 🚀 **Больше проектов**: Следите за обновлениями на Boosty
+
+---
+
+## 🎯 О проекте
+
+**WAN Super** — профессиональное приложение для генерации видео с использованием:
+- **Облачного API** (Alibaba DashScope WAN 2.5)
+- **Локального сервера** (WAN 2.5 self-hosted)
+
+### ✨ Новая архитектура проекта
+
+- 🏠 **Главная страница с меню** — выбор между API и локальным режимом
+- 📁 **Структурированный код** — API-логика в папке `api/`
+- 🎨 **Брендирование The Angel Studio**
+- 🔧 **Модульная архитектура** для легкого расширения
+
+---
+
+## 🚀 Быстрый старт
+
+### Установка
+
 ```bash
 git clone https://github.com/sanek1989/WanSuper.git
 cd WanSuper
 pip install -r requirements.txt
 ```
 
-This will install:
-- `dashscope>=1.14.0` - Official DashScope SDK
-- `gradio>=4.0.0` - Web UI framework
-- `requests>=2.31.0` - HTTP library
-- Other dependencies
+### Запуск
 
-### Getting DashScope API Key
-1. Visit [Alibaba Cloud DashScope Console](https://dashscope.console.aliyun.com/)
-2. Create or obtain your API key (format: `sk-...`)
-3. Save the key securely
-
-Alternatively, set the key as an environment variable:
-```bash
-export DASHSCOPE_API_KEY="sk-xxxxxxxxxxxxxxxxxxxxxxxx"
-```
-
-### ⚠️ ВАЖНО: Требование способа оплаты / IMPORTANT: Payment Method Requirement
-
-**Для работы с DashScope ключом (sk-...) и любыми моделями WAN 2.5 необходимо добавить способ оплаты (банковская карта, AliPay и др.) в панели Alibaba Cloud. Без этого API-ключ не работает, и все обращения заблокированы: будет ошибка `NO_AVAILABLE_PAYMENT_METHOD`. Даже бесплатные квоты требуют актуальной оплаты! Проверьте ваш аккаунт перед запуском.**
-
-**To use DashScope API keys (sk-...) with any WAN 2.5 models, you MUST add a payment method (bank card, AliPay, etc.) to your Alibaba Cloud account. Without this, the API key will not work and all requests will be blocked with error `NO_AVAILABLE_PAYMENT_METHOD`. Even free quotas require an active payment method! Please verify your account before running.**
-
-## ▶️ Running
 ```bash
 python main.py
 ```
 
-After starting, open your browser at:
-- Locally: http://localhost:7860
-- From network: http://YOUR_IP:7860
+Откройте браузер:
+- Локально: [http://localhost:7860](http://localhost:7860)
+- Из сети: `http://YOUR_IP:7860`
 
-## 📖 Usage
+---
 
-### Text2Video Mode
-1. Enter your DashScope API key in the "DashScope API Key" field
-2. Select "text2video" mode
-3. Enter a text description (prompt)
-4. Configure generation parameters (duration, resolution, FPS, seed)
-5. Click "Generate Video" and wait for completion
-6. The video URL will be provided upon completion
+##  🎮 Главное меню
 
-### Img2Video Mode
-1. Enter your DashScope API key in the "DashScope API Key" field
-2. Select "img2video" mode
-3. Upload an image from your PC (preferred) OR provide an image URL
-   - Image upload field will appear when img2video is selected
-   - Local file upload has priority over URL if both are provided
-4. Enter a text description (prompt) describing what should happen in the video
-5. Configure generation parameters (duration, resolution, FPS, seed)
-6. Click "Generate Video" and wait for completion
-7. The video URL will be provided upon completion
+При запуске вы увидите **главную страницу The Angel Studio** с выбором режима:
 
-Note: In img2video mode, the uploaded/provided image will be used as the first frame of the generated video.
+### 1️⃣ **API Mode** (Облачная генерация)
+- Использует Alibaba Cloud DashScope WAN 2.5 API
+- Требует API ключ (формат: `sk-...`)
+- Поддержка text2video и img2video
+- Быстрая генерация без локального GPU
 
-## 🗂️ Project Structure
+### 2️⃣ **Local Mode** (Локальный сервер)
+- Использует локально развернутый WAN 2.5
+- Не требует облачных ключей
+- Полный контроль и приватность
+- Требует мощное GPU оборудование
+
+---
+
+## 📁 Структура проекта
+
 ```
 WanSuper/
-├── main.py              # Gradio UI with mode selection and image upload
-├── wan_api.py           # DashScopeClient class (async_call/fetch/wait)
-├── requirements.txt     # Project dependencies (includes dashscope)
-└── README.md            # Documentation
+├── main.py                 # Главная страница с меню выбора режима
+├── api/                    # API-режим (облачная генерация)
+│   ├── wan_api.py          # DashScope API клиент
+│   └── api_interface.py    # Gradio интерфейс для API
+├── local/                  # Локальный режим (self-hosted)
+│   └── local_interface.py  # Gradio интерфейс для локального сервера
+├── requirements.txt        # Зависимости
+└── README.md               # Документация
 ```
 
-## 🔧 Components
+---
 
-### main.py
-Gradio application with:
-- DashScope API key input
-- Mode selection (text2video / img2video)
-- Local image upload support
-- Generation parameters
-- Integrates DashScopeClient for video generation
+## 🔐 API Mode — Облачная генерация
 
-### wan_api.py
-DashScope WAN 2.5 API client using official SDK:
+### Получение DashScope API ключа
 
-```python
-from wan_api import DashScopeClient
+1. Посетите [Alibaba Cloud DashScope Console](https://dashscope.console.aliyun.com/)
+2. Создайте или получите API ключ (формат: `sk-...`)
+3. Сохраните ключ безопасно
 
-# Initialize client
-client = DashScopeClient(api_key="sk-...")
+### ⚠️ ВАЖНО: Требование способа оплаты
 
-# Submit generation task (async_call)
-task_id = client.submit_generation(
-    prompt="A beautiful sunset over the ocean",
-    image_url="https://example.com/image.jpg",  # Optional (URL or file path)
-    duration=5,
-    width=1280,
-    height=720,
-    fps=24,
-    seed=42  # Optional
-)
+**Для работы с DashScope ключом необходимо добавить способ оплаты** (банковская карта, AliPay и др.) в Alibaba Cloud. Без этого API-ключ не работает, будет ошибка `NO_AVAILABLE_PAYMENT_METHOD`. Даже бесплатные квоты требуют активной оплаты!
 
-# Check status (fetch)
-status_info = client.check_status(task_id)
+**To use DashScope API keys, you MUST add a payment method** (bank card, AliPay, etc.) to your Alibaba Cloud account. Without this, the API key will not work and requests will be blocked with error `NO_AVAILABLE_PAYMENT_METHOD`. Even free quotas require an active payment method!
 
-# Wait for completion (wait)
-video_url = client.wait_for_completion(
-    task_id,
-    progress_callback=lambda p: print(f"Progress: {p*100}%")
-)
+### Возможности API Mode
 
-print(f"Video URL: {video_url}")
-```
+- ✅ **text2video** — генерация видео из текстового описания
+- ✅ **img2video** — анимация изображения (первый кадр)
+- ✅ Загрузка локальных изображений или URL
+- ✅ Настройка параметров (длительность, разрешение, FPS, seed)
+- ✅ Отслеживание прогресса
+- ✅ Прямая ссылка на видео
 
-Key methods:
-- **submit_generation()** - Submit task using dashscope.VideoSynthesis.async_call()
-  - Handles both URL and local file paths for images
-- **check_status()** - Check task status using dashscope.VideoSynthesis.fetch()
-- **wait_for_completion()** - Wait for task and return video URL
+---
 
-Status mapping:
-- DashScope PENDING → pending
-- DashScope RUNNING → processing
-- DashScope SUCCEEDED → completed
-- DashScope FAILED → failed
+## 🏠 Local Mode — Локальный сервер
 
-## 🌐 DashScope API Pattern
+### Требования
 
-The official DashScope SDK follows this pattern:
+- Локально развернутый WAN 2.5 сервер
+- Мощное GPU (рекомендуется 24GB+ VRAM)
+- Python 3.8+
 
-1. **async_call** - Submit generation task
-   ```python
-   response = dashscope.VideoSynthesis.async_call(
-       model="wan25-turbo",
-       input={"prompt": "..."},
-       parameters={"duration": 5, "size": "1280x720"}
-   )
-   task_id = response.output.get("task_id")
-   ```
+### Возможности Local Mode
 
-2. **fetch** - Check task status
-   ```python
-   response = dashscope.VideoSynthesis.fetch(task_id=task_id)
-   status = response.output.get("task_status")  # PENDING, RUNNING, SUCCEEDED, FAILED
-   ```
+- ✅ Полная приватность данных
+- ✅ Не требует облачных API ключей
+- ✅ Локальная генерация без лимитов
+- ✅ Полный контроль над процессом
 
-3. **wait** - Poll until completion
-   ```python
-   while status != "SUCCEEDED":
-       response = dashscope.VideoSynthesis.fetch(task_id=task_id)
-       status = response.output.get("task_status")
-       time.sleep(5)
-   video_url = response.output.get("video_url")
-   ```
+**Примечание**: Режим Local Mode находится в разработке. Следите за обновлениями!
+
+---
+
+## 🎨 The Angel Studio Features
+
+### В главном интерфейсе
+
+- 🏢 Брендирование The Angel Studio
+- 🎨 Стильный дизайн с Gradio
+- 🔄 Легкое переключение между режимами
+- 📊 Информация о проекте и поддержке
+
+### Ссылки
+
+- **Поддержать студию**: [https://boosty.to/the_angel](https://boosty.to/the_angel)
+- **GitHub**: [https://github.com/sanek1989/WanSuper](https://github.com/sanek1989/WanSuper)
+
+---
 
 ## 💡 Tips
-- Store API key in environment variables (`DASHSCOPE_API_KEY`), don't commit it
-- **Mode Selection**: Choose the appropriate mode for your use case
-  - `text2video`: Generate video purely from text description
-  - `img2video`: Animate from a starting image
-- **Image Upload**: Local file upload has priority over URL
-  - Supports common image formats (JPEG, PNG, etc.)
-  - Image will be used as the first frame
-- Detailed prompts improve generation quality
-- Higher resolutions require more time and API quota
-- Use seed for reproducible results
-- API key format: `sk-` followed by alphanumeric characters
+
+- 🔒 Храните API ключи в переменных окружения (`DASHSCOPE_API_KEY`)
+- 📝 Детализированные промпты улучшают качество
+- ⚙️ Высокое разрешение требует больше времени и ресурсов
+- 🎲 Используйте seed для воспроизводимых результатов
+- 📁 Локальные файлы изображений имеют приоритет над URL
+
+---
 
 ## 🐛 Troubleshooting
-- **"API key required"** - Provide valid DashScope API key
-- **"Failed to submit"** - Check API key validity and WAN 2.5 access
-- **"Generation failed"** - Check API quota/limits and parameter formats
-- **"img2video mode requires an image"** - Upload a file or provide URL when using img2video mode
-- **Slow generation** - Reduce duration/resolution/FPS
-- **Import errors** - Run `pip install dashscope>=1.14.0`
-- **Image not uploading** - Check file format and size, try using a URL instead
+
+### API Mode
+- "API key required" — Укажите валидный DashScope API ключ
+- "Failed to submit" — Проверьте валидность ключа и доступ к WAN 2.5
+- "NO_AVAILABLE_PAYMENT_METHOD" — Добавьте способ оплаты в Alibaba Cloud
+
+### Local Mode
+- Проверьте, что локальный WAN 2.5 сервер запущен
+- Убедитесь в наличии достаточных GPU ресурсов
+
+### Общие проблемы
+- Медленная генерация — Снизьте длительность/разрешение/FPS
+- Ошибки импорта — Выполните `pip install -r requirements.txt`
+- Изображение не загружается — Проверьте формат и размер файла
+
+---
 
 ## 📚 Documentation
+
 - [DashScope Official Documentation](https://help.aliyun.com/zh/dashscope/)
 - [WAN 2.5 Video Synthesis API](https://help.aliyun.com/zh/dashscope/developer-reference/api-details-9)
 - [Gradio Documentation](https://gradio.app/docs/)
 
+---
+
 ## 📝 License
-Open source project for use and modification.
+
+Open source project created by **The Angel Studio**.  
+Free for use and modification.
+
+---
 
 ## 📧 Contact
-For issues or questions, create an Issue in the repository.
+
+- 💬 **Issues**: Create an Issue in this repository
+- 🎨 **Support**: [https://boosty.to/the_angel](https://boosty.to/the_angel)
+
+---
+
+<div align="center">
+
+**Made with ❤️ by [The Angel Studio](https://boosty.to/the_angel)**
+
+</div>
