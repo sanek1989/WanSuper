@@ -1,4 +1,4 @@
-"""WAN 2.5 Video Generator - Main Landing Page
+"""WAN Super Video/image Generator - Main Landing Page
 The Angel Studio - Professional AI Video Generation Tools
 """
 import gradio as gr
@@ -139,7 +139,7 @@ def create_main_interface():
     ]
     
     with gr.Blocks(
-        title="The Angel Studio - WAN 2.5 Video Generator",
+        title="The Angel Studio - WAN Super",
         theme=gr.themes.Soft()
     ) as demo:
         
@@ -232,14 +232,14 @@ def create_main_interface():
     return demo
 
 if __name__ == "__main__":
-    print("✨ Starting The Angel Studio - WAN 2.5 Video Generator...")
+    print("✨ Starting The Angel Studio - WAN Super Video/image Generator...")
     print("🌐 Server will be available at: http://localhost:7860")
     print("🌟 Support us: https://boosty.to/the_angel")
     
     demo = create_main_interface()
     
     demo.launch(
-        server_name="0.0.0.0",
+        server_name="localhost",
         server_port=7860,
         share=False,
         show_error=True
