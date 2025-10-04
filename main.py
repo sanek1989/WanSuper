@@ -1,256 +1,174 @@
-"""WAN 2.5 Video Generator with DashScope SDK and Gradio UI"""
+"""WAN 2.5 Video Generator - Main Menu
+
+The Angel Studio - Professional AI Video Generation Tools
+"""
 import gradio as gr
-import os
-import base64
-from wan_api import DashScopeClient
+from api.api_interface import create_api_interface
+from local.local_interface import create_local_interface
 
-def generate_video(api_key, mode, prompt, image_file, image_url, duration, resolution, fps, seed, progress=gr.Progress()):
+def create_main_menu():
     """
-    Generate video using DashScope SDK (Alibaba WAN 2.5)
-    
-    Args:
-        api_key: DashScope API key (format: sk-...)
-        mode: Generation mode ("text2video" or "img2video")
-        prompt: Text description for video generation
-        image_file: Local image file (for img2video mode)
-        image_url: Image URL (for img2video mode)
-        duration: Video duration in seconds
-        resolution: Video resolution (format: "1920x1080")
-        fps: Frames per second
-        seed: Seed for reproducibility
-        
-    Returns:
-        Video URL or error message
+    Create main menu interface with mode selection
     """
-    try:
-        progress(0, desc="Initializing...")
-        
-        # Validate API key
-        if not api_key or not api_key.strip():
-            return None, "❌ Error: Please provide a DashScope API key"
-        
-        # Create DashScope client
-        client = DashScopeClient(api_key=api_key.strip())
-        
-        progress(0.1, desc="Submitting generation request...")
-        
-        # Parse resolution
-        width, height = map(int, resolution.split('x'))
-        
-        # Determine image source based on mode
-        image_input = None
-        if mode == "img2video":
-            if image_file is not None:
-                # Local file upload (priority)
-                image_input = image_file
-                progress(0.15, desc="Processing local image...")
-            elif image_url and image_url.strip():
-                # URL input
-                image_input = image_url.strip()
-            else:
-                return None, "❌ Error: img2video mode requires an image (upload or URL)"
-        
-        # Submit video generation task
-        task_id = client.submit_generation(
-            prompt=prompt,
-            image_url=image_input,
-            duration=duration,
-            width=width,
-            height=height,
-            fps=fps,
-            seed=seed if seed > 0 else None
-        )
-        
-        if not task_id:
-            return None, "❌ Error: Failed to submit generation request"
-        
-        progress(0.2, desc=f"Video generation started (ID: {task_id})...")
-        
-        # Wait for completion with progress updates
-        video_url = client.wait_for_completion(
-            task_id, 
-            progress_callback=lambda p: progress(0.2 + p * 0.7, desc="Generating video...")
-        )
-        
-        if video_url:
-            progress(1.0, desc="Done!")
-            mode_desc = "img2video" if mode == "img2video" else "text2video"
-            return video_url, f"✅ Video generated successfully!\nMode: {mode_desc}\nTask ID: {task_id}\nVideo URL: {video_url}"
-        else:
-            return None, "❌ Error: Video generation failed"
-            
-    except ValueError as e:
-        return None, f"❌ Error: {str(e)}"
-    except Exception as e:
-        return None, f"❌ Error: {str(e)}"
-
-def update_image_inputs(mode):
-    """
-    Update visibility of image inputs based on selected mode
-    """
-    if mode == "img2video":
-        return [
-            gr.update(visible=True),  # image_file
-            gr.update(visible=True)   # image_url
-        ]
-    else:
-        return [
-            gr.update(visible=False),
-            gr.update(visible=False)
-        ]
-
-def create_interface():
-    """
-    Create Gradio interface for WAN 2.5 video generation
-    """
-    with gr.Blocks(title="WAN 2.5 Video Generator (DashScope)", theme=gr.themes.Soft()) as demo:
+    with gr.Blocks(title="The Angel Studio - WAN 2.5 Video Generator", theme=gr.themes.Soft()) as demo:
+        # Large title with The Angel Studio branding
         gr.Markdown(
             """
-            # 🎬 WAN 2.5 Video Generator (DashScope SDK)
-            
-            Generate videos using the official DashScope SDK for Alibaba WAN 2.5.
-            
-            ## How to use:
-            1. Get your DashScope API key (format: sk-...)
-            2. Enter your API key below
-            3. **Select generation mode**: text2video or img2video
-            4. For img2video: upload an image or provide URL (first frame)
-            5. Provide a text description
-            6. Configure generation parameters
-            7. Click "Generate Video"
-            
-            **Note:** The generated video URL will be provided directly from DashScope API.
+            <div style="text-align: center; padding: 40px 20px;">
+                <h1 style="font-size: 3.5em; margin-bottom: 10px; color: #2c3e50;">
+                    🎬 THE ANGEL STUDIO
+                </h1>
+                <h2 style="font-size: 2em; margin-top: 0; margin-bottom: 20px; color: #34495e;">
+                    WAN 2.5 Video Generator
+                </h2>
+                <p style="font-size: 1.2em; color: #7f8c8d;">
+                    Professional AI Video Generation Tools
+                </p>
+            </div>
             """
-        )
-        
-        with gr.Row():
-            with gr.Column(scale=1):
-                gr.Markdown("### 🔐 Authentication")
-                
-                api_key = gr.Textbox(
-                    label="DashScope API Key",
-                    placeholder="sk-************************",
-                    type="password",
-                    info="Key is used locally and sent to DashScope API only"
-                )
-                
-                gr.Markdown("### 🎥 Generation Mode")
-                
-                mode = gr.Radio(
-                    label="Mode",
-                    choices=["text2video", "img2video"],
-                    value="text2video",
-                    info="Select text2video for pure text generation, or img2video to use an image as the first frame"
-                )
-                
-                gr.Markdown("### 📝 Generation Parameters")
-                
-                prompt = gr.Textbox(
-                    label="Video Description (Prompt)",
-                    placeholder="A serene sunset over the ocean with birds flying...",
-                    lines=3,
-                    info="Describe what you want to see in the video"
-                )
-                
-                # Image inputs (hidden by default for text2video)
-                image_file = gr.Image(
-                    label="Upload Image (for img2video)",
-                    type="filepath",
-                    visible=False
-                )
-                
-                image_url = gr.Textbox(
-                    label="OR Image URL (for img2video)",
-                    placeholder="https://example.com/image.jpg",
-                    visible=False,
-                    info="Alternatively, provide an image URL (used if no file uploaded)"
-                )
-                
-                with gr.Row():
-                    duration = gr.Slider(
-                        label="Duration (sec)",
-                        minimum=1,
-                        maximum=30,
-                        value=5,
-                        step=1
-                    )
-                    fps = gr.Slider(
-                        label="FPS",
-                        minimum=8,
-                        maximum=60,
-                        value=24,
-                        step=1
-                    )
-                
-                resolution = gr.Dropdown(
-                    label="Resolution",
-                    choices=["512x512", "768x768", "1024x576", "1280x720", "1920x1080"],
-                    value="1280x720"
-                )
-                
-                seed = gr.Number(
-                    label="Seed (optional)",
-                    value=-1,
-                    precision=0,
-                    info="Use -1 for random seed"
-                )
-                
-                generate_btn = gr.Button("🎬 Generate Video", variant="primary", size="lg")
-            
-            with gr.Column(scale=1):
-                gr.Markdown("### 🎬 Result")
-                
-                output_video = gr.Video(label="Generated Video")
-                output_status = gr.Textbox(label="Status", lines=5)
-                
-                gr.Markdown(
-                    """
-                    ### 💡 Tips:
-                    - **text2video**: Generate video from text description only
-                    - **img2video**: Use an image as the first frame and animate it
-                    - Use detailed descriptions for best results
-                    - Higher resolutions require more time and resources
-                    - Seed allows reproducing identical results
-                    - DashScope API key starts with "sk-"
-                    - Local image upload has priority over URL
-                    """
-                )
-        
-        # Mode change handler - show/hide image inputs
-        mode.change(
-            fn=update_image_inputs,
-            inputs=[mode],
-            outputs=[image_file, image_url]
-        )
-        
-        # Bind generation function to button
-        generate_btn.click(
-            fn=generate_video,
-            inputs=[api_key, mode, prompt, image_file, image_url, duration, resolution, fps, seed],
-            outputs=[output_video, output_status]
         )
         
         gr.Markdown(
             """
             ---
-            ### 📚 Documentation
-            - Uses official DashScope SDK (Python)
-            - API Pattern: `async_call` → `fetch` → `wait`
-            - **Modes**: text2video (text only) and img2video (image + text)
-            - **Image Upload**: Supports local file upload or URL input
-            - Ensure API key is valid and has access to WAN 2.5
-            - Check logs and API limits if issues occur
-            - Documentation: https://help.aliyun.com/zh/dashscope/
+            
+            ## 🎮 Select Generation Mode
+            
+            Choose your preferred video generation mode below.
             """
+        )
+        
+        with gr.Row():
+            with gr.Column(scale=1):
+                gr.Markdown(
+                    """
+                    ### 🚫 API Mode
+                    
+                    **Cloud-based video generation**
+                    
+                    ✅ Uses Alibaba Cloud DashScope WAN 2.5 API  
+                    ✅ No local GPU required  
+                    ✅ Fast and convenient  
+                    ✅ Requires API key (sk-...)  
+                    ✅ Supports text2video & img2video  
+                    
+                    Perfect for quick generation without heavy hardware requirements.
+                    """
+                )
+                
+                api_button = gr.Button(
+                    "🔑 Start API Mode",
+                    variant="primary",
+                    size="lg",
+                    scale=1
+                )
+            
+            with gr.Column(scale=1):
+                gr.Markdown(
+                    """
+                    ### 🏘️ Local Mode
+                    
+                    **Self-hosted server generation**
+                    
+                    ✅ Complete data privacy  
+                    ✅ No cloud API keys required  
+                    ✅ Unlimited local generation  
+                    ✅ Full control over process  
+                    🚧 Requires powerful GPU (24GB+ VRAM)  
+                    
+                    Ideal for users with local WAN 2.5 deployment and privacy needs.
+                    """
+                )
+                
+                local_button = gr.Button(
+                    "🏘️ Start Local Mode",
+                    variant="secondary",
+                    size="lg",
+                    scale=1
+                )
+        
+        gr.Markdown(
+            """
+            ---
+            
+            ### 📚 About WAN 2.5
+            
+            WAN 2.5 is a powerful video generation model that creates high-quality videos from text descriptions or images.
+            
+            - **text2video**: Generate videos from text prompts
+            - **img2video**: Animate images into videos
+            - **High quality**: Support for various resolutions and frame rates
+            - **Flexible**: Customizable duration, resolution, FPS, and seed
+            
+            ---
+            
+            ### 🌟 Support The Angel Studio
+            
+            If you find this tool useful, please consider supporting our work:
+            
+            [💝 Support on Boosty](https://boosty.to/the_angel) | [🐛 GitHub Repository](https://github.com/sanek1989/WanSuper)
+            
+            ---
+            
+            <div style="text-align: center; padding: 20px; color: #95a5a6;">
+                <p>Made with ❤️ by <strong>The Angel Studio</strong></p>
+                <p style="font-size: 0.9em;">Professional AI Tools for Creative Professionals</p>
+            </div>
+            """
+        )
+        
+        # Create hidden interfaces that will be shown when buttons are clicked
+        api_interface = create_api_interface()
+        local_interface = create_local_interface()
+        
+        # Button click handlers - these will navigate to the respective interfaces
+        api_button.click(
+            fn=lambda: None,
+            outputs=None
+        ).then(
+            fn=lambda: gr.update(visible=False),
+            outputs=demo
+        ).then(
+            fn=lambda: api_interface.launch(prevent_thread_lock=True),
+            outputs=None
+        )
+        
+        local_button.click(
+            fn=lambda: None,
+            outputs=None
+        ).then(
+            fn=lambda: gr.update(visible=False),
+            outputs=demo
+        ).then(
+            fn=lambda: local_interface.launch(prevent_thread_lock=True),
+            outputs=None
         )
     
     return demo
 
 if __name__ == "__main__":
-    demo = create_interface()
+    print("✨ Starting The Angel Studio - WAN 2.5 Video Generator...")
+    print("🌐 Server will be available at: http://localhost:7860")
+    print("🌟 Support us: https://boosty.to/the_angel")
+    
+    # For simplicity, we'll just launch the API interface directly
+    # The menu approach with buttons would require more complex state management
+    # So we'll create a tabbed interface instead
+    
+    api_interface = create_api_interface()
+    local_interface = create_local_interface()
+    
+    # Create tabbed interface with The Angel Studio branding
+    demo = gr.TabbedInterface(
+        [api_interface, local_interface],
+        ["🔑 API Mode (Cloud)", "🏘️ Local Mode (Self-Hosted)"],
+        title="THE ANGEL STUDIO - WAN 2.5 Video Generator",
+        theme=gr.themes.Soft()
+    )
+    
     demo.launch(
-        server_name="0.0.0.0",  # Access from local network
+        server_name="0.0.0.0",
         server_port=7860,
-        share=False,  # Set True for public access via Gradio
+        share=False,
         show_error=True
     )
