@@ -39,6 +39,27 @@
 ```bash
 git clone https://github.com/sanek1989/WanSuper.git
 cd WanSuper
+```
+
+#### 🔥 Установка PyTorch (обязательно для локального режима)
+
+**PyTorch требуется для работы с GPU и локальной генерации видео.**
+
+Выберите версию на официальном сайте: [https://pytorch.org/get-started/locally/](https://pytorch.org/get-started/locally/)
+
+**Пример для CUDA 11.8 (Windows/Linux):**
+```bash
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+```
+
+**Для CPU (если нет GPU):**
+```bash
+pip install torch torchvision torchaudio
+```
+
+#### Установка остальных зависимостей
+
+```bash
 pip install -r requirements.txt
 ```
 
@@ -59,12 +80,14 @@ python main.py
 При запуске вы увидите **главную страницу The Angel Studio** с выбором режима:
 
 ### 1️⃣ **API Mode** (Облачная генерация)
+
 - Использует Alibaba Cloud DashScope WAN 2.5 API
 - Требует API ключ (формат: `sk-...`)
 - Поддержка text2video и img2video
 - Быстрая генерация без локального GPU
 
 ### 2️⃣ **Local Mode** (Локальный сервер)
+
 - Использует локально развернутый WAN 2.5
 - Не требует облачных ключей
 - Полный контроль и приватность
@@ -128,7 +151,7 @@ WanSuper/
 - ✅ Локальная генерация без лимитов
 - ✅ Полный контроль над процессом
 
-**Примечание**: Режим Local Mode находится в разработке. Следите за обновлениями!
+> **Примечание:** Режим Local Mode находится в разработке. Следите за обновлениями!
 
 ---
 
@@ -143,8 +166,8 @@ WanSuper/
 
 ### Ссылки
 
-- **Поддержать студию**: [https://boosty.to/the_angel](https://boosty.to/the_angel)
-- **GitHub**: [https://github.com/sanek1989/WanSuper](https://github.com/sanek1989/WanSuper)
+- **Поддержать студию:** [https://boosty.to/the_angel](https://boosty.to/the_angel)
+- **GitHub:** [https://github.com/sanek1989/WanSuper](https://github.com/sanek1989/WanSuper)
 
 ---
 
@@ -161,15 +184,18 @@ WanSuper/
 ## 🐛 Troubleshooting
 
 ### API Mode
+
 - "API key required" — Укажите валидный DashScope API ключ
 - "Failed to submit" — Проверьте валидность ключа и доступ к WAN 2.5
 - "NO_AVAILABLE_PAYMENT_METHOD" — Добавьте способ оплаты в Alibaba Cloud
 
 ### Local Mode
+
 - Проверьте, что локальный WAN 2.5 сервер запущен
 - Убедитесь в наличии достаточных GPU ресурсов
 
 ### Общие проблемы
+
 - Медленная генерация — Снизьте длительность/разрешение/FPS
 - Ошибки импорта — Выполните `pip install -r requirements.txt`
 - Изображение не загружается — Проверьте формат и размер файла
@@ -193,13 +219,9 @@ Free for use and modification.
 
 ## 📧 Contact
 
-- 💬 **Issues**: Create an Issue in this repository
-- 🎨 **Support**: [https://boosty.to/the_angel](https://boosty.to/the_angel)
+- 💬 **Issues:** Create an Issue in this repository
+- 🎨 **Support:** [https://boosty.to/the_angel](https://boosty.to/the_angel)
 
 ---
 
-<div align="center">
-
 **Made with ❤️ by [The Angel Studio](https://boosty.to/the_angel)**
-
-</div>
