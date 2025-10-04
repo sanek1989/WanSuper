@@ -1,43 +1,44 @@
+"""WAN 2.5 Video Generator with DashScope SDK and Gradio UI"""
 import gradio as gr
 import os
 from wan_api import DashScopeClient
 
 
-def generate_video(api_key, prompt, duration, resolution, fps, seed, progress=gr.Progress()):
+def generate_video(api_key, prompt, image_url, duration, resolution, fps, seed, progress=gr.Progress()):
     """
-    Генерация видео через DashScope SDK (Alibaba WAN 2.5)
+    Generate video using DashScope SDK (Alibaba WAN 2.5)
     
     Args:
-        api_key: API-ключ DashScope (формат sk-...)
-        prompt: Текстовое описание для генерации видео
-        duration: Продолжительность видео в секундах
-        resolution: Разрешение видео (формат: "1920x1080")
-        fps: Количество кадров в секунду
-        seed: Seed для воспроизводимости результатов
+        api_key: DashScope API key (format: sk-...)
+        prompt: Text description for video generation
+        image_url: Optional first frame image URL (img2video mode)
+        duration: Video duration in seconds
+        resolution: Video resolution (format: "1920x1080")
+        fps: Frames per second
+        seed: Seed for reproducibility
         
     Returns:
-        Путь к сгенерированному видео или сообщение об ошибке
+        Video URL or error message
     """
     try:
-        progress(0, desc="Инициализация...")
+        progress(0, desc="Initializing...")
         
-        # Создание клиента DashScope
-        client = DashScopeClient(api_key=api_key)
+        # Validate API key
+        if not api_key or not api_key.strip():
+            return None, "❌ Error: Please provide a DashScope API key"
         
-        progress(0.1, desc="Проверка доступа к DashScope...")
+        # Create DashScope client
+        client = DashScopeClient(api_key=api_key.strip())
         
-        # Проверка доступности сервиса
-        if not client.check_health():
-            return None, "❌ Ошибка: Сервис DashScope недоступен. Проверьте API-ключ."
+        progress(0.1, desc="Submitting generation request...")
         
-        progress(0.2, desc="Отправка запроса на генерацию...")
-        
-        # Разбор разрешения
+        # Parse resolution
         width, height = map(int, resolution.split('x'))
         
-        # Отправка запроса на генерацию
+        # Submit video generation task
         task_id = client.submit_generation(
             prompt=prompt,
+            image_url=image_url if image_url and image_url.strip() else None,
             duration=duration,
             width=width,
             height=height,
@@ -46,69 +47,79 @@ def generate_video(api_key, prompt, duration, resolution, fps, seed, progress=gr
         )
         
         if not task_id:
-            return None, "❌ Ошибка: Не удалось отправить запрос на генерацию."
+            return None, "❌ Error: Failed to submit generation request"
         
-        progress(0.3, desc=f"Генерация видео (ID: {task_id})...")
+        progress(0.2, desc=f"Video generation started (ID: {task_id})...")
         
-        # Ожидание завершения генерации
-        video_path = client.wait_for_completion(
+        # Wait for completion with progress updates
+        video_url = client.wait_for_completion(
             task_id, 
-            progress_callback=lambda p: progress(0.3 + p * 0.6, desc="Генерация видео...")
+            progress_callback=lambda p: progress(0.2 + p * 0.7, desc="Generating video...")
         )
         
-        if video_path:
-            progress(1.0, desc="Готово!")
-            return video_path, f"✅ Видео успешно сгенерировано! (ID: {task_id})"
+        if video_url:
+            progress(1.0, desc="Done!")
+            return video_url, f"✅ Video generated successfully!\nTask ID: {task_id}\nVideo URL: {video_url}"
         else:
-            return None, "❌ Ошибка: Не удалось сгенерировать видео."
+            return None, "❌ Error: Video generation failed"
             
+    except ValueError as e:
+        return None, f"❌ Error: {str(e)}"
     except Exception as e:
-        return None, f"❌ Ошибка: {str(e)}"
+        return None, f"❌ Error: {str(e)}"
 
 
 def create_interface():
     """
-    Создание Gradio интерфейса
+    Create Gradio interface for WAN 2.5 video generation
     """
     with gr.Blocks(title="WAN 2.5 Video Generator (DashScope)", theme=gr.themes.Soft()) as demo:
         gr.Markdown(
             """
             # 🎬 WAN 2.5 Video Generator (DashScope SDK)
             
-            Генерация видео с помощью официального DashScope SDK для Alibaba WAN 2.5.
+            Generate videos using the official DashScope SDK for Alibaba WAN 2.5.
             
-            ## Как использовать:
-            1. Получите API-ключ DashScope (формат sk-...)
-            2. Вставьте ваш API-ключ в поле ниже
-            3. Введите текстовое описание желаемого видео
-            4. Настройте параметры генерации
-            5. Нажмите "Сгенерировать видео"
+            ## How to use:
+            1. Get your DashScope API key (format: sk-...)
+            2. Enter your API key below
+            3. Provide a text description (and optionally an image URL)
+            4. Configure generation parameters
+            5. Click "Generate Video"
+            
+            **Note:** The generated video URL will be provided directly from DashScope API.
             """
         )
         
         with gr.Row():
             with gr.Column(scale=1):
-                gr.Markdown("### 🔐 Аутентификация")
+                gr.Markdown("### 🔐 Authentication")
                 
                 api_key = gr.Textbox(
-                    label="API-ключ DashScope",
+                    label="DashScope API Key",
                     placeholder="sk-************************",
                     type="password",
-                    info="Ключ используется только локально и отправляется на DashScope API"
+                    info="Key is used locally and sent to DashScope API only"
                 )
                 
-                gr.Markdown("### 📝 Параметры генерации")
+                gr.Markdown("### 📝 Generation Parameters")
                 
                 prompt = gr.Textbox(
-                    label="Описание видео (Prompt)",
+                    label="Video Description (Prompt)",
                     placeholder="A serene sunset over the ocean with birds flying...",
                     lines=3,
-                    info="Опишите, что вы хотите увидеть в видео"
+                    info="Describe what you want to see in the video"
+                )
+                
+                image_url = gr.Textbox(
+                    label="Image URL (Optional - for img2video)",
+                    placeholder="https://example.com/image.jpg",
+                    info="Provide an image URL to use as the first frame (img2video mode)"
                 )
                 
                 with gr.Row():
                     duration = gr.Slider(
-                        label="Длительность (сек)",
+                        label="Duration (sec)",
                         minimum=1,
                         maximum=30,
                         value=5,
@@ -123,51 +134,53 @@ def create_interface():
                     )
                 
                 resolution = gr.Dropdown(
-                    label="Разрешение",
+                    label="Resolution",
                     choices=["512x512", "768x768", "1024x576", "1280x720", "1920x1080"],
                     value="1280x720"
                 )
                 
                 seed = gr.Number(
-                    label="Seed (опционально)",
+                    label="Seed (optional)",
                     value=-1,
                     precision=0,
-                    info="Используйте -1 для случайного seed"
+                    info="Use -1 for random seed"
                 )
                 
-                generate_btn = gr.Button("🎬 Сгенерировать видео", variant="primary", size="lg")
+                generate_btn = gr.Button("🎬 Generate Video", variant="primary", size="lg")
             
             with gr.Column(scale=1):
-                gr.Markdown("### 🎥 Результат")
+                gr.Markdown("### 🎬 Result")
                 
-                output_video = gr.Video(label="Сгенерированное видео")
-                output_status = gr.Textbox(label="Статус", lines=2)
+                output_video = gr.Video(label="Generated Video")
+                output_status = gr.Textbox(label="Status", lines=4)
                 
                 gr.Markdown(
                     """
-                    ### 💡 Советы:
-                    - Используйте детальные описания для лучших результатов
-                    - Большие разрешения требуют больше времени и ресурсов
-                    - Seed позволяет воспроизводить одинаковые результаты
-                    - API-ключ DashScope начинается с "sk-"
+                    ### 💡 Tips:
+                    - Use detailed descriptions for best results
+                    - Higher resolutions require more time and resources
+                    - Seed allows reproducing identical results
+                    - DashScope API key starts with "sk-"
+                    - Image URL enables img2video mode (first frame)
                     """
                 )
         
-        # Привязка функции генерации к кнопке
+        # Bind generation function to button
         generate_btn.click(
             fn=generate_video,
-            inputs=[api_key, prompt, duration, resolution, fps, seed],
+            inputs=[api_key, prompt, image_url, duration, resolution, fps, seed],
             outputs=[output_video, output_status]
         )
         
         gr.Markdown(
             """
             ---
-            ### 📚 Документация
-            - Используется официальный DashScope SDK
-            - Убедитесь, что API-ключ действителен и имеет доступ к WAN 2.5
-            - При проблемах проверьте логи и лимиты API
-            - Документация: https://help.aliyun.com/zh/dashscope/
+            ### 📚 Documentation
+            - Uses official DashScope SDK (Python)
+            - API Pattern: `async_call` → `fetch` → `wait`
+            - Ensure API key is valid and has access to WAN 2.5
+            - Check logs and API limits if issues occur
+            - Documentation: https://help.aliyun.com/zh/dashscope/
             """
         )
     
@@ -177,8 +190,8 @@ def create_interface():
 if __name__ == "__main__":
     demo = create_interface()
     demo.launch(
-        server_name="0.0.0.0",  # Доступ из локальной сети
+        server_name="0.0.0.0",  # Access from local network
         server_port=7860,
-        share=False,  # Установите True для публичного доступа через Gradio
+        share=False,  # Set True for public access via Gradio
         show_error=True
     )
