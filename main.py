@@ -31,14 +31,14 @@ def create_about_content():
     """Create about project content"""
     return gr.Markdown(
         """
-        # 📖 О проекте WAN 2.5
+        # 📖 О проекте WAN Super
         
         **WAN Super** — это профессиональное приложение для генерации видео с использованием современных AI-технологий.
         
         ## 🎯 Основные возможности
         
         ### 🔑 API Mode (Облачная генерация)
-        - ✅ Использует Alibaba Cloud DashScope WAN 2.5 API
+        - ✅ Использует Alibaba Cloud WAN 2.5 API
         - ✅ Не требует локального GPU
         - ✅ Быстрая генерация
         - ✅ Поддержка text2video и img2video
@@ -49,7 +49,7 @@ def create_about_content():
         - ✅ Не требует облачных API ключей
         - ✅ Локальная генерация без лимитов
         - ✅ Полный контроль над процессом
-        - ⚠️ Требует мощное GPU (24GB+ VRAM)
+        - ⚠️ Требует мощное GPU (4GB+ VRAM)
         
         ## 🛠️ Технические особенности
         
@@ -150,7 +150,7 @@ def create_main_interface():
                     """
                     <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; color: white; margin-bottom: 20px;">
                         <h3 style="margin: 0; font-size: 1.2em;">🎬 THE ANGEL STUDIO</h3>
-                        <p style="margin: 5px 0 0 0; font-size: 0.9em; opacity: 0.9;">WAN 2.5 Video Generator</p>
+                        <p style="margin: 5px 0 0 0; font-size: 0.9em; opacity: 0.9;">WAN Super Generator</p>
                     </div>
                     """
                 )
