@@ -1,17 +1,19 @@
 """WAN 2.5 Video Generator with DashScope SDK and Gradio UI"""
 import gradio as gr
 import os
+import base64
 from wan_api import DashScopeClient
 
-
-def generate_video(api_key, prompt, image_url, duration, resolution, fps, seed, progress=gr.Progress()):
+def generate_video(api_key, mode, prompt, image_file, image_url, duration, resolution, fps, seed, progress=gr.Progress()):
     """
     Generate video using DashScope SDK (Alibaba WAN 2.5)
     
     Args:
         api_key: DashScope API key (format: sk-...)
+        mode: Generation mode ("text2video" or "img2video")
         prompt: Text description for video generation
-        image_url: Optional first frame image URL (img2video mode)
+        image_file: Local image file (for img2video mode)
+        image_url: Image URL (for img2video mode)
         duration: Video duration in seconds
         resolution: Video resolution (format: "1920x1080")
         fps: Frames per second
@@ -35,10 +37,23 @@ def generate_video(api_key, prompt, image_url, duration, resolution, fps, seed, 
         # Parse resolution
         width, height = map(int, resolution.split('x'))
         
+        # Determine image source based on mode
+        image_input = None
+        if mode == "img2video":
+            if image_file is not None:
+                # Local file upload (priority)
+                image_input = image_file
+                progress(0.15, desc="Processing local image...")
+            elif image_url and image_url.strip():
+                # URL input
+                image_input = image_url.strip()
+            else:
+                return None, "❌ Error: img2video mode requires an image (upload or URL)"
+        
         # Submit video generation task
         task_id = client.submit_generation(
             prompt=prompt,
-            image_url=image_url if image_url and image_url.strip() else None,
+            image_url=image_input,
             duration=duration,
             width=width,
             height=height,
@@ -59,7 +74,8 @@ def generate_video(api_key, prompt, image_url, duration, resolution, fps, seed, 
         
         if video_url:
             progress(1.0, desc="Done!")
-            return video_url, f"✅ Video generated successfully!\nTask ID: {task_id}\nVideo URL: {video_url}"
+            mode_desc = "img2video" if mode == "img2video" else "text2video"
+            return video_url, f"✅ Video generated successfully!\nMode: {mode_desc}\nTask ID: {task_id}\nVideo URL: {video_url}"
         else:
             return None, "❌ Error: Video generation failed"
             
@@ -68,6 +84,20 @@ def generate_video(api_key, prompt, image_url, duration, resolution, fps, seed, 
     except Exception as e:
         return None, f"❌ Error: {str(e)}"
 
+def update_image_inputs(mode):
+    """
+    Update visibility of image inputs based on selected mode
+    """
+    if mode == "img2video":
+        return [
+            gr.update(visible=True),  # image_file
+            gr.update(visible=True)   # image_url
+        ]
+    else:
+        return [
+            gr.update(visible=False),
+            gr.update(visible=False)
+        ]
 
 def create_interface():
     """
@@ -83,9 +113,11 @@ def create_interface():
             ## How to use:
             1. Get your DashScope API key (format: sk-...)
             2. Enter your API key below
-            3. Provide a text description (and optionally an image URL)
-            4. Configure generation parameters
-            5. Click "Generate Video"
+            3. **Select generation mode**: text2video or img2video
+            4. For img2video: upload an image or provide URL (first frame)
+            5. Provide a text description
+            6. Configure generation parameters
+            7. Click "Generate Video"
             
             **Note:** The generated video URL will be provided directly from DashScope API.
             """
@@ -102,6 +134,15 @@ def create_interface():
                     info="Key is used locally and sent to DashScope API only"
                 )
                 
+                gr.Markdown("### 🎥 Generation Mode")
+                
+                mode = gr.Radio(
+                    label="Mode",
+                    choices=["text2video", "img2video"],
+                    value="text2video",
+                    info="Select text2video for pure text generation, or img2video to use an image as the first frame"
+                )
+                
                 gr.Markdown("### 📝 Generation Parameters")
                 
                 prompt = gr.Textbox(
@@ -111,10 +152,19 @@ def create_interface():
                     info="Describe what you want to see in the video"
                 )
                 
+                # Image inputs (hidden by default for text2video)
+                image_file = gr.Image(
+                    label="Upload Image (for img2video)",
+                    type="filepath",
+                    visible=False,
+                    info="Upload a local image file to use as the first frame"
+                )
+                
                 image_url = gr.Textbox(
-                    label="Image URL (Optional - for img2video)",
+                    label="OR Image URL (for img2video)",
                     placeholder="https://example.com/image.jpg",
-                    info="Provide an image URL to use as the first frame (img2video mode)"
+                    visible=False,
+                    info="Alternatively, provide an image URL (used if no file uploaded)"
                 )
                 
                 with gr.Row():
@@ -152,23 +202,32 @@ def create_interface():
                 gr.Markdown("### 🎬 Result")
                 
                 output_video = gr.Video(label="Generated Video")
-                output_status = gr.Textbox(label="Status", lines=4)
+                output_status = gr.Textbox(label="Status", lines=5)
                 
                 gr.Markdown(
                     """
                     ### 💡 Tips:
+                    - **text2video**: Generate video from text description only
+                    - **img2video**: Use an image as the first frame and animate it
                     - Use detailed descriptions for best results
                     - Higher resolutions require more time and resources
                     - Seed allows reproducing identical results
                     - DashScope API key starts with "sk-"
-                    - Image URL enables img2video mode (first frame)
+                    - Local image upload has priority over URL
                     """
                 )
+        
+        # Mode change handler - show/hide image inputs
+        mode.change(
+            fn=update_image_inputs,
+            inputs=[mode],
+            outputs=[image_file, image_url]
+        )
         
         # Bind generation function to button
         generate_btn.click(
             fn=generate_video,
-            inputs=[api_key, prompt, image_url, duration, resolution, fps, seed],
+            inputs=[api_key, mode, prompt, image_file, image_url, duration, resolution, fps, seed],
             outputs=[output_video, output_status]
         )
         
@@ -178,6 +237,8 @@ def create_interface():
             ### 📚 Documentation
             - Uses official DashScope SDK (Python)
             - API Pattern: `async_call` → `fetch` → `wait`
+            - **Modes**: text2video (text only) and img2video (image + text)
+            - **Image Upload**: Supports local file upload or URL input
             - Ensure API key is valid and has access to WAN 2.5
             - Check logs and API limits if issues occur
             - Documentation: https://help.aliyun.com/zh/dashscope/
@@ -185,7 +246,6 @@ def create_interface():
         )
     
     return demo
-
 
 if __name__ == "__main__":
     demo = create_interface()
