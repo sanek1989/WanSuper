@@ -108,18 +108,7 @@ def create_api_interface():
             # 🎞️ WAN 2.5 API Mode - Cloud Generation
             
             Generate videos using Alibaba Cloud DashScope WAN 2.5 API.
-            
-            ## How to use:
-            1. Get your DashScope API key (format: sk-...)
-            2. Enter your API key below
-            3. **Select generation mode**: text2video or img2video
-            4. For img2video: upload an image or provide URL (first frame)
-            5. Provide a text description
-            6. Configure generation parameters
-            7. Click "Generate Video"
-            
-            **Note:** The generated video URL will be provided directly from DashScope API.
-            """
+
         )
         
         with gr.Row():
@@ -232,15 +221,6 @@ def create_api_interface():
         gr.Markdown(
             """
             ---
-            ### 📚 Documentation
-            - Uses official DashScope SDK (Python)
-            - API Pattern: `async_call` → `fetch` → `wait`
-            - **Modes**: text2video (text only) and img2video (image + text)
-            - **Image Upload**: Supports local file upload or URL input
-            - Ensure API key is valid and has access to WAN 2.5
-            - Check logs and API limits if issues occur
-            - Documentation: https://help.aliyun.com/zh/dashscope/
-            
             **Made with ❤️ by The Angel Studio**
             """
         )
