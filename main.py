@@ -156,8 +156,7 @@ def create_interface():
                 image_file = gr.Image(
                     label="Upload Image (for img2video)",
                     type="filepath",
-                    visible=False,
-                    info="Upload a local image file to use as the first frame"
+                    visible=False
                 )
                 
                 image_url = gr.Textbox(
